@@ -79,6 +79,11 @@ func resourceSecurityCenterSubscriptionPricing() *pluginsdk.Resource {
 				Type:     pluginsdk.TypeString,
 				Optional: true,
 			},
+			"extensions": {
+				Type:     pluginsdk.TypeList,
+				Optional: true,
+				Default:  []pricings_v2023_01_01.Extension{},
+			},
 		},
 	}
 }
@@ -109,8 +114,13 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 		}
 	}
 
-	if v, ok := d.GetOk("subplan"); ok {
-		pricing.Properties.SubPlan = utils.String(v.(string))
+	if vSub, okSub := d.GetOk("subplan"); okSub {
+		pricing.Properties.SubPlan = utils.String(vSub.(string))
+	}
+
+	if vExt, okExt := d.GetOk("extensions"); okExt {
+		var extensions = vExt.([]pricings_v2023_01_01.Extension)
+		pricing.Properties.Extensions = &extensions
 	}
 
 	if _, err := client.Update(ctx, id, pricing); err != nil {
@@ -147,6 +157,7 @@ func resourceSecurityCenterSubscriptionPricingRead(d *pluginsdk.ResourceData, me
 		if properties := resp.Model.Properties; properties != nil {
 			d.Set("tier", properties.PricingTier)
 			d.Set("subplan", properties.SubPlan)
+			d.Set("extensions", properties.Extensions)
 		}
 	}
 
