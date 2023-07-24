@@ -155,6 +155,12 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 		tflog.Trace(ctx, "[DEBUG] Converting to JSON")
 		modelAsJson1, _ := json.Marshal(vExt)
 		log.Printf("[DEBUG] extensions found %s", modelAsJson1)
+		log.Printf("[DEBUG] converting")
+		m := vExt.([]PricingExtensionModel)
+		log.Printf("[DEBUG] converted")
+		modelAsJson12, _ := json.Marshal(m[0])
+		log.Printf("[DEBUG] first extensions found %s", modelAsJson12)
+
 		tflog.Trace(ctx, "[DEBUG] extensions found 1", map[string]interface{}{
 			"V":    1,
 			"DICT": modelAsJson1,
