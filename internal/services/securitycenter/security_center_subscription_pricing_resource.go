@@ -147,7 +147,7 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 		pricing.Properties.SubPlan = utils.String(vSub.(string))
 	}
 
-	if vExt, okExt := d.GetOk("extensions"); okExt {
+	if vExt, okExt := d.GetOk("extension"); okExt {
 		log.Printf("[DEBUG] extensions found")
 		tflog.Trace(ctx, "[DEBUG] extensions found")
 		var extensions = ConvertToSDKModel(vExt.([]PricingExtensionModel))
@@ -161,8 +161,9 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 	}
 	log.Printf("[DEBUG] id: %s, Pricing Update Object: %s", id, modelAsJson)
 	tflog.Trace(ctx, "[DEBUG] id: %s, Pricing Update Object: %s", map[string]interface{}{
-		"ID":   id,
-		"Body": modelAsJson,
+		"ID":        id,
+		"Body":      modelAsJson,
+		"DEBUG_MAP": d,
 	})
 
 	if _, err := client.Update(ctx, id, pricing); err != nil {
