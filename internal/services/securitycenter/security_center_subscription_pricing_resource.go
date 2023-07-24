@@ -165,7 +165,7 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 			"V":    1,
 			"DICT": modelAsJson1,
 		})
-		var extensions = ConvertToSDKModel(vExt.([]PricingExtensionModel))
+		var extensions = ConvertToSDKModel(vExt.([]interface{}))
 		log.Printf("[DEBUG] total extensions %d", len(*extensions))
 		pricing.Properties.Extensions = extensions
 	}
@@ -246,14 +246,16 @@ func resourceSecurityCenterSubscriptionPricingDelete(d *pluginsdk.ResourceData, 
 	return nil
 }
 
-func ConvertToSDKModel(inputList []PricingExtensionModel) *[]pricings_v2023_01_01.Extension {
+func ConvertToSDKModel(inputList []interface{}) *[]pricings_v2023_01_01.Extension {
 	if len(inputList) == 0 {
 		return nil
 	}
 
 	var outputList []pricings_v2023_01_01.Extension
 	for _, v := range inputList {
-		input := v
+		modelAsJson1, _ := json.Marshal(v)
+		log.Printf("[DEBUG] converting %s to model", modelAsJson1)
+		input := v.(PricingExtensionModel)
 		output := pricings_v2023_01_01.Extension{
 			Name:                          input.Name,
 			IsEnabled:                     input.IsEnabled,
