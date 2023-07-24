@@ -259,7 +259,7 @@ func ConvertToSDKModel(inputList []interface{}) *[]pricings_v2023_01_01.Extensio
 		input := v.(map[string]interface{})
 		output := pricings_v2023_01_01.Extension{
 			Name:      input["name"].(string),
-			IsEnabled: input["is_enabled"].(pricings_v2023_01_01.IsEnabled),
+			IsEnabled: pricings_v2023_01_01.IsEnabled(input["is_enabled"].(string)),
 		}
 		log.Printf("[DEBUG] converting STEP2")
 
