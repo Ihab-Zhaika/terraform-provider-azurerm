@@ -156,7 +156,7 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 		modelAsJson1, _ := json.Marshal(vExt)
 		log.Printf("[DEBUG] extensions found %s", modelAsJson1)
 		log.Printf("[DEBUG] converting")
-		m := vExt.([]PricingExtensionModel)
+		m := vExt.([]interface{})
 		log.Printf("[DEBUG] converted")
 		modelAsJson12, _ := json.Marshal(m[0])
 		log.Printf("[DEBUG] first extensions found %s", modelAsJson12)
