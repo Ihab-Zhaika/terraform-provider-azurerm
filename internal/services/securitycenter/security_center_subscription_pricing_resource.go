@@ -89,11 +89,11 @@ func resourceSecurityCenterSubscriptionPricing() *pluginsdk.Resource {
 							Type:     pluginsdk.TypeString,
 							Required: true,
 						},
-						"Name": {
+						"name": {
 							Type:     pluginsdk.TypeString,
 							Required: true,
 						},
-						"AdditionalExtensionProperties": {
+						"additional_extension_properties": {
 							Type:     schema.TypeMap,
 							Optional: true,
 							Elem: &schema.Schema{
