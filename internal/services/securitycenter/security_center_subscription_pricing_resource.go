@@ -9,6 +9,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/services/preview/security/mgmt/v3.0/security" // nolint: staticcheck
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	pricings_v2023_01_01 "github.com/hashicorp/go-azure-sdk/resource-manager/security/2023-01-01/pricings"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
@@ -114,9 +115,12 @@ func resourceSecurityCenterSubscriptionPricing() *pluginsdk.Resource {
 }
 
 func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
+
 	client := meta.(*clients.Client).SecurityCenter.PricingClient
 	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
+	tflog.Trace(ctx, "[DEBUG] in update")
+
 	defer cancel()
 
 	id := pricings_v2023_01_01.NewPricingID(subscriptionId, d.Get("resource_type").(string))
@@ -145,6 +149,7 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 
 	if vExt, okExt := d.GetOk("extensions"); okExt {
 		log.Printf("[DEBUG] extensions found")
+		tflog.Trace(ctx, "[DEBUG] extensions found")
 		var extensions = ConvertToSDKModel(vExt.([]PricingExtensionModel))
 		log.Printf("[DEBUG] total extensions %d", len(*extensions))
 		pricing.Properties.Extensions = extensions
@@ -155,6 +160,10 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 		log.Printf("[DEBUG] JSON ERROR %s", jerr)
 	}
 	log.Printf("[DEBUG] id: %s, Pricing Update Object: %s", id, modelAsJson)
+	tflog.Trace(ctx, "[DEBUG] id: %s, Pricing Update Object: %s", map[string]interface{}{
+		"ID":   id,
+		"Body": modelAsJson,
+	})
 
 	if _, err := client.Update(ctx, id, pricing); err != nil {
 		return fmt.Errorf("setting %s: %+v", id, err)
