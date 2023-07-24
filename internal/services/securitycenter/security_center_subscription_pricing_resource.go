@@ -103,6 +103,7 @@ func resourceSecurityCenterSubscriptionPricing() *pluginsdk.Resource {
 						"additional_extension_properties": {
 							Type:     schema.TypeMap,
 							Optional: true,
+							Default:  map[string]string{},
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
@@ -255,12 +256,18 @@ func ConvertToSDKModel(inputList []interface{}) *[]pricings_v2023_01_01.Extensio
 	for _, v := range inputList {
 		modelAsJson1, _ := json.Marshal(v)
 		log.Printf("[DEBUG] converting %s to model", modelAsJson1)
-		input := v.(PricingExtensionModel)
+		input := v.(map[string]interface{})
 		output := pricings_v2023_01_01.Extension{
-			Name:                          input.Name,
-			IsEnabled:                     input.IsEnabled,
-			AdditionalExtensionProperties: input.AdditionalExtensionProperties,
+			Name:      input["name"].(string),
+			IsEnabled: input["is_enabled"].(pricings_v2023_01_01.IsEnabled),
 		}
+		log.Printf("[DEBUG] converting STEP2")
+
+		if vAdditional, ok := input["additional_extension_properties"]; ok {
+			output.AdditionalExtensionProperties = &vAdditional
+		}
+		log.Printf("[DEBUG] converting STEP3")
+
 		outputList = append(outputList, output)
 	}
 
