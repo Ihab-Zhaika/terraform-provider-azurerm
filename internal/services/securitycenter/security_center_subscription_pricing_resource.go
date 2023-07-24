@@ -4,14 +4,12 @@
 package securitycenter
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"log"
-	"time"
-
 	"github.com/Azure/azure-sdk-for-go/services/preview/security/mgmt/v3.0/security" // nolint: staticcheck
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	pricings_v2023_01_01 "github.com/hashicorp/go-azure-sdk/resource-manager/security/2023-01-01/pricings"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/securitycenter/migration"
@@ -20,9 +18,11 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
+	"log"
+	"time"
 )
 
-type PricingExtensionCreateModel struct {
+type PricingExtensionModel struct {
 	AdditionalExtensionProperties *interface{}                   `tfschema:"additional_extension_properties"`
 	IsEnabled                     pricings_v2023_01_01.IsEnabled `tfschema:"is_enabled"`
 	Name                          string                         `tfschema:"name"`
@@ -144,9 +144,17 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 	}
 
 	if vExt, okExt := d.GetOk("extensions"); okExt {
-		var extensions = ConvertToSDKModel(vExt.([]PricingExtensionCreateModel))
+		log.Printf("[DEBUG] extensions found")
+		var extensions = ConvertToSDKModel(vExt.([]PricingExtensionModel))
+		log.Printf("[DEBUG] total extensions %d", len(*extensions))
 		pricing.Properties.Extensions = extensions
 	}
+
+	modelAsJson, jerr := json.Marshal(pricing)
+	if jerr != nil {
+		log.Printf("[DEBUG] JSON ERROR %s", jerr)
+	}
+	log.Printf("[DEBUG] id: %s, Pricing Update Object: %s", id, modelAsJson)
 
 	if _, err := client.Update(ctx, id, pricing); err != nil {
 		return fmt.Errorf("setting %s: %+v", id, err)
@@ -213,7 +221,7 @@ func resourceSecurityCenterSubscriptionPricingDelete(d *pluginsdk.ResourceData, 
 	return nil
 }
 
-func ConvertToSDKModel(inputList []PricingExtensionCreateModel) *[]pricings_v2023_01_01.Extension {
+func ConvertToSDKModel(inputList []PricingExtensionModel) *[]pricings_v2023_01_01.Extension {
 	if len(inputList) == 0 {
 		return nil
 	}
