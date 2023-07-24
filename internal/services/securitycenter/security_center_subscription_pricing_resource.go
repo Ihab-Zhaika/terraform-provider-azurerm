@@ -5,6 +5,7 @@ package securitycenter
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"log"
 	"time"
 
@@ -82,7 +83,25 @@ func resourceSecurityCenterSubscriptionPricing() *pluginsdk.Resource {
 			"extensions": {
 				Type:     pluginsdk.TypeList,
 				Optional: true,
-				Default:  []pricings_v2023_01_01.Extension{},
+				Elem: &pluginsdk.Resource{
+					Schema: map[string]*pluginsdk.Schema{
+						"is_enabled": {
+							Type:     pluginsdk.TypeString,
+							Required: true,
+						},
+						"Name": {
+							Type:     pluginsdk.TypeString,
+							Required: true,
+						},
+						"AdditionalExtensionProperties": {
+							Type:     schema.TypeMap,
+							Optional: true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+					},
+				},
 			},
 		},
 	}
