@@ -22,6 +22,12 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
+type PricingExtensionCreateModel struct {
+	AdditionalExtensionProperties *interface{}                   `tfschema:"additional_extension_properties"`
+	IsEnabled                     pricings_v2023_01_01.IsEnabled `tfschema:"is_enabled"`
+	Name                          string                         `tfschema:"name"`
+}
+
 func resourceSecurityCenterSubscriptionPricing() *pluginsdk.Resource {
 	return &pluginsdk.Resource{
 		Create: resourceSecurityCenterSubscriptionPricingUpdate,
@@ -80,7 +86,7 @@ func resourceSecurityCenterSubscriptionPricing() *pluginsdk.Resource {
 				Type:     pluginsdk.TypeString,
 				Optional: true,
 			},
-			"extensions": {
+			"extension": {
 				Type:     pluginsdk.TypeList,
 				Optional: true,
 				Elem: &pluginsdk.Resource{
@@ -138,8 +144,8 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 	}
 
 	if vExt, okExt := d.GetOk("extensions"); okExt {
-		var extensions = vExt.([]pricings_v2023_01_01.Extension)
-		pricing.Properties.Extensions = &extensions
+		var extensions = ConvertToSDKModel(vExt.([]PricingExtensionCreateModel))
+		pricing.Properties.Extensions = extensions
 	}
 
 	if _, err := client.Update(ctx, id, pricing); err != nil {
@@ -205,4 +211,23 @@ func resourceSecurityCenterSubscriptionPricingDelete(d *pluginsdk.ResourceData, 
 
 	log.Printf("[DEBUG] Security Center Subscription deletion invocation")
 	return nil
+}
+
+func ConvertToSDKModel(inputList []PricingExtensionCreateModel) *[]pricings_v2023_01_01.Extension {
+	if len(inputList) == 0 {
+		return nil
+	}
+
+	var outputList []pricings_v2023_01_01.Extension
+	for _, v := range inputList {
+		input := v
+		output := pricings_v2023_01_01.Extension{
+			Name:                          input.Name,
+			IsEnabled:                     input.IsEnabled,
+			AdditionalExtensionProperties: input.AdditionalExtensionProperties,
+		}
+		outputList = append(outputList, output)
+	}
+
+	return &outputList
 }
