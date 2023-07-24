@@ -152,9 +152,12 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 	}
 
 	if vExt, okExt := d.GetOk("extension"); okExt {
-		log.Printf("[DEBUG] extensions found")
-		tflog.Trace(ctx, "[DEBUG] extensions found", map[string]interface{}{
-			"DICT": vExt,
+		tflog.Trace(ctx, "[DEBUG] Converting to JSON")
+		modelAsJson1, _ := json.Marshal(vExt)
+		log.Printf("[DEBUG] extensions found %s", modelAsJson1)
+		tflog.Trace(ctx, "[DEBUG] extensions found 1", map[string]interface{}{
+			"V":    1,
+			"DICT": modelAsJson1,
 		})
 		var extensions = ConvertToSDKModel(vExt.([]PricingExtensionModel))
 		log.Printf("[DEBUG] total extensions %d", len(*extensions))
