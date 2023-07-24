@@ -143,13 +143,19 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 		}
 	}
 
+	tflog.Trace(ctx, "[DEBUG]NEW EXT", map[string]interface{}{
+		"ID":        id,
+		"DEBUG_MAP": d,
+	})
 	if vSub, okSub := d.GetOk("subplan"); okSub {
 		pricing.Properties.SubPlan = utils.String(vSub.(string))
 	}
 
 	if vExt, okExt := d.GetOk("extension"); okExt {
 		log.Printf("[DEBUG] extensions found")
-		tflog.Trace(ctx, "[DEBUG] extensions found")
+		tflog.Trace(ctx, "[DEBUG] extensions found", map[string]interface{}{
+			"DICT": vExt,
+		})
 		var extensions = ConvertToSDKModel(vExt.([]PricingExtensionModel))
 		log.Printf("[DEBUG] total extensions %d", len(*extensions))
 		pricing.Properties.Extensions = extensions
