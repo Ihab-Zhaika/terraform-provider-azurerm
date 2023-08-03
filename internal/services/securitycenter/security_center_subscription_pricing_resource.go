@@ -221,23 +221,27 @@ func expandSecurityCenterSubscriptionPricingExtensions(inputList []interface{}, 
 	if len(inputList) == 0 {
 		return nil
 	}
-
+	log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions A")
 	var extensionStatuses = map[string]bool{}
 	var extensionProperties = map[string]*interface{}{}
 
 	var outputList []pricings_v2023_01_01.Extension
-
+	log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions B")
 	// set any extension in the template to be true
 	for _, v := range inputList {
 		input := v.(map[string]interface{})
 		extensionStatuses[input["name"].(string)] = true
+		log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions C %s", input["name"].(string))
+
 		if vAdditional, ok := input["additional_extension_properties"]; ok {
 			extensionProperties[input["name"].(string)] = &vAdditional
 		}
 	}
+	log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions D")
 
 	if extensionsStatusFromBackend != nil {
 		for _, backendExtension := range *extensionsStatusFromBackend {
+			log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions E %s", backendExtension.Name)
 			_, ok := extensionStatuses[backendExtension.Name]
 			// set any extension that does not appear in the template to be false
 			if !ok {
@@ -245,6 +249,8 @@ func expandSecurityCenterSubscriptionPricingExtensions(inputList []interface{}, 
 			}
 		}
 	}
+
+	log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions F")
 
 	for extensionName, toBeEnabled := range extensionStatuses {
 
