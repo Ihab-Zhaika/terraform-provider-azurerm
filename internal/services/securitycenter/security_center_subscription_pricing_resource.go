@@ -4,6 +4,7 @@
 package securitycenter
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -120,8 +121,9 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 	}
 
 	extensionsStatusFromBackend := []pricings_v2023_01_01.Extension{}
+
+	existing, err := client.Get(ctx, id)
 	if d.IsNewResource() {
-		existing, err := client.Get(ctx, id)
 		if err != nil {
 			if !response.WasNotFound(existing.HttpResponse) {
 				return fmt.Errorf("checking for presence of existing %s: %+v", id, err)
@@ -130,11 +132,12 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 		if existing.Model != nil && existing.Model.Properties != nil && existing.Model.Properties.PricingTier != pricings_v2023_01_01.PricingTierFree {
 			return fmt.Errorf("the pricing tier of this subscription is not Free \r %+v", tf.ImportAsExistsError("azurerm_security_center_subscription_pricing", id.ID()))
 		}
+	}
+	modelAsJson12, _ := json.Marshal(existing)
+	log.Printf("[DEBUG] Object from API %s", modelAsJson12)
 
-		if existing.Model != nil && existing.Model.Properties != nil && existing.Model.Properties.Extensions != nil {
-			extensionsStatusFromBackend = *existing.Model.Properties.Extensions
-		}
-
+	if existing.Model != nil && existing.Model.Properties != nil && existing.Model.Properties.Extensions != nil {
+		extensionsStatusFromBackend = *existing.Model.Properties.Extensions
 	}
 
 	if vSub, okSub := d.GetOk("subplan"); okSub {
