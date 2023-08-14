@@ -133,6 +133,9 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 		}
 	}
 
+	modelAsJson12, _ := json.Marshal(d)
+	log.Printf("[DEBUG] resourceSecurityCenterSubscriptionPricingUpdate the changed model is: %s", modelAsJson12)
+
 	extensionsStatusFromBackend := make([]pricings_v2023_01_01.Extension, 0)
 	if err == nil && apiResponse.Model != nil && apiResponse.Model.Properties != nil && apiResponse.Model.Properties.Extensions != nil {
 		log.Printf("[DEBUG] resourceSecurityCenterSubscriptionPricingUpdate Reading the extenstions from the model")
@@ -141,7 +144,10 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 
 	if vSub, okSub := d.GetOk("subplan"); okSub {
 		pricing.Properties.SubPlan = utils.String(vSub.(string))
+		log.Printf("[DEBUG] resourceSecurityCenterSubscriptionPricingUpdate the subplan us is: %s", vSub.(string))
 	}
+	log.Printf("[DEBUG] resourceSecurityCenterSubscriptionPricingUpdate Is new resource? %t", d.IsNewResource())
+
 	if d.HasChange("extension") || d.IsNewResource() {
 		// can not set extensions for free tier
 		if pricing.Properties.PricingTier == pricings_v2023_01_01.PricingTierStandard {
@@ -235,7 +241,7 @@ func expandSecurityCenterSubscriptionPricingExtensions(inputList []interface{}, 
 	for _, v := range inputList {
 		input := v.(map[string]interface{})
 		extensionStatuses[input["name"].(string)] = true
-		log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions C %s", input["name"].(string))
+		log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions C [%s]", input["name"].(string))
 
 		if vAdditional, ok := input["additional_extension_properties"]; ok {
 			extensionProperties[input["name"].(string)] = &vAdditional
@@ -245,7 +251,7 @@ func expandSecurityCenterSubscriptionPricingExtensions(inputList []interface{}, 
 
 	if extensionsStatusFromBackend != nil {
 		for _, backendExtension := range *extensionsStatusFromBackend {
-			log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions E %s", backendExtension.Name)
+			log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions E [%s]", backendExtension.Name)
 			_, ok := extensionStatuses[backendExtension.Name]
 			// set any extension that does not appear in the template to be false
 			if !ok {
