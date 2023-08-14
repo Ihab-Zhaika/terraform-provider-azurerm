@@ -234,9 +234,6 @@ func expandSecurityCenterSubscriptionPricingExtensions(inputList []interface{}, 
 	modelAsJson12, _ := json.Marshal(inputList)
 	log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions inputList [%s]", modelAsJson12)
 
-	if len(inputList) == 0 {
-		return nil
-	}
 	log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions A")
 	var extensionStatuses = map[string]bool{}
 	var extensionProperties = map[string]*interface{}{}
