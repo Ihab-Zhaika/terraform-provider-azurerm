@@ -108,6 +108,7 @@ func resourceSecurityCenterSubscriptionPricing() *pluginsdk.Resource {
 
 func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
 
+	// perform read before the update
 	client := meta.(*clients.Client).SecurityCenter.PricingClient
 	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
@@ -227,15 +228,16 @@ func resourceSecurityCenterSubscriptionPricingDelete(d *pluginsdk.ResourceData, 
 }
 
 func expandSecurityCenterSubscriptionPricingExtensions(inputList []interface{}, extensionsStatusFromBackend *[]pricings_v2023_01_01.Extension) *[]pricings_v2023_01_01.Extension {
+
+	modelAsJson12, _ := json.Marshal(inputList)
+	log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions inputList [%s]", modelAsJson12)
+
 	if len(inputList) == 0 {
 		return nil
 	}
 	log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions A")
 	var extensionStatuses = map[string]bool{}
 	var extensionProperties = map[string]*interface{}{}
-
-	modelAsJson12, _ := json.Marshal(inputList)
-	log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions inputList %s", modelAsJson12)
 
 	if extensionsStatusFromBackend != nil {
 		for _, backendExtension := range *extensionsStatusFromBackend {
