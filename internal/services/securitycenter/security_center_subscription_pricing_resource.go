@@ -138,9 +138,9 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 
 	extensionsStatusFromBackend := make([]pricings_v2023_01_01.Extension, 0)
 	if err == nil && apiResponse.Model != nil && apiResponse.Model.Properties != nil && apiResponse.Model.Properties.Extensions != nil {
-		log.Printf("[DEBUG] resourceSecurityCenterSubscriptionPricingUpdate before reading the extenstions from the model, current length is %d", len(extensionsStatusFromBackend))
+		log.Printf("[DEBUG] resourceSecurityCenterSubscriptionPricingUpdate before reading the extenstions from the backend, current length is %d", len(extensionsStatusFromBackend))
 		extensionsStatusFromBackend = *apiResponse.Model.Properties.Extensions
-		log.Printf("[DEBUG] resourceSecurityCenterSubscriptionPricingUpdate after Reading the extenstions from the model, current length is %d", len(extensionsStatusFromBackend))
+		log.Printf("[DEBUG] resourceSecurityCenterSubscriptionPricingUpdate after Reading the extenstions from the backend, current length is %d", len(extensionsStatusFromBackend))
 	}
 
 	if vSub, okSub := d.GetOk("subplan"); okSub {
@@ -148,6 +148,7 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 		log.Printf("[DEBUG] resourceSecurityCenterSubscriptionPricingUpdate the subplan us is: %s", vSub.(string))
 	}
 	log.Printf("[DEBUG] resourceSecurityCenterSubscriptionPricingUpdate Is new resource? %t", d.IsNewResource())
+	log.Printf("[DEBUG] resourceSecurityCenterSubscriptionPricingUpdate has extension changed? %t", d.HasChange("extension"))
 
 	if d.HasChange("extension") || d.IsNewResource() {
 		// can not set extensions for free tier
@@ -241,6 +242,10 @@ func expandSecurityCenterSubscriptionPricingExtensions(inputList []interface{}, 
 	// set any extension in the template to be true
 	for _, v := range inputList {
 		input := v.(map[string]interface{})
+		if input["name"] == "" {
+			log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions B-2")
+			continue
+		}
 		extensionStatuses[input["name"].(string)] = true
 		log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions C [%s]", input["name"].(string))
 
