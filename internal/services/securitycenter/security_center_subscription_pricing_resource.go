@@ -138,8 +138,9 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 
 	extensionsStatusFromBackend := make([]pricings_v2023_01_01.Extension, 0)
 	if err == nil && apiResponse.Model != nil && apiResponse.Model.Properties != nil && apiResponse.Model.Properties.Extensions != nil {
-		log.Printf("[DEBUG] resourceSecurityCenterSubscriptionPricingUpdate Reading the extenstions from the model")
+		log.Printf("[DEBUG] resourceSecurityCenterSubscriptionPricingUpdate before reading the extenstions from the model, current length is %d", len(extensionsStatusFromBackend))
 		extensionsStatusFromBackend = *apiResponse.Model.Properties.Extensions
+		log.Printf("[DEBUG] resourceSecurityCenterSubscriptionPricingUpdate after Reading the extenstions from the model, current length is %d", len(extensionsStatusFromBackend))
 	}
 
 	if vSub, okSub := d.GetOk("subplan"); okSub {
