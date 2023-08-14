@@ -237,36 +237,32 @@ func expandSecurityCenterSubscriptionPricingExtensions(inputList []interface{}, 
 	modelAsJson12, _ := json.Marshal(inputList)
 	log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions inputList %s", modelAsJson12)
 
+	if extensionsStatusFromBackend != nil {
+		for _, backendExtension := range *extensionsStatusFromBackend {
+			log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions E [%s]", backendExtension.Name)
+			// set the default value to false, then turn on the extension that appear in the template
+			extensionStatuses[backendExtension.Name] = false
+		}
+	}
+
 	var outputList []pricings_v2023_01_01.Extension
 	log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions B")
 	// set any extension in the template to be true
 	for _, v := range inputList {
 		input := v.(map[string]interface{})
 		if input["name"] == "" {
-			log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions B-2")
+			log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions B-2 empty")
 			continue
 		}
 		extensionStatuses[input["name"].(string)] = true
-		log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions C [%s]", input["name"].(string))
+		log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions B [%s]", input["name"].(string))
 
 		if vAdditional, ok := input["additional_extension_properties"]; ok {
 			extensionProperties[input["name"].(string)] = &vAdditional
 		}
 	}
-	log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions D")
 
-	if extensionsStatusFromBackend != nil {
-		for _, backendExtension := range *extensionsStatusFromBackend {
-			log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions E [%s]", backendExtension.Name)
-			_, ok := extensionStatuses[backendExtension.Name]
-			// set any extension that does not appear in the template to be false
-			if !ok {
-				extensionStatuses[backendExtension.Name] = false
-			}
-		}
-	}
-
-	log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions F")
+	log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions C")
 
 	for extensionName, toBeEnabled := range extensionStatuses {
 
