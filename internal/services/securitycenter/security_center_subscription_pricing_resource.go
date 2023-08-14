@@ -153,7 +153,9 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 
 	if d.HasChange("extension") || d.IsNewResource() {
 		// can not set extensions for free tier
+		log.Printf("[DEBUG] resourceSecurityCenterSubscriptionPricingUpdate pricing tier: %s", pricing.Properties.PricingTier)
 		if pricing.Properties.PricingTier == pricings_v2023_01_01.PricingTierStandard {
+			log.Printf("[DEBUG] resourceSecurityCenterSubscriptionPricingUpdate before the update")
 			var extensions = expandSecurityCenterSubscriptionPricingExtensions(d.Get("extension").(*pluginsdk.Set).List(), &extensionsStatusFromBackend)
 			pricing.Properties.Extensions = extensions
 		}
