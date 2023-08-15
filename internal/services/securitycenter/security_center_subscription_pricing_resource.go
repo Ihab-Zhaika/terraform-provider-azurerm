@@ -4,6 +4,7 @@
 package securitycenter
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -133,8 +134,8 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 		}
 	}
 
-	bundlesExtnestions := map[string][]string{
-		"StorageAccounts": {"OnUploadMalwareScanning", "OnUploadMalwareScanning"},
+	bundlesExtensions := map[string][]string{
+		"StorageAccounts": {"OnUploadMalwareScanning", "SensitiveDataDiscovery"},
 		"CloudPosture":    {"SensitiveDataDiscovery", "ContainerRegistriesVulnerabilityAssessments", "AgentlessDiscoveryForKubernetes", "AgentlessVmScanning"},
 	}
 
@@ -143,10 +144,16 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 		if apiResponse.Model.Properties.Extensions != nil {
 			extensionsStatusFromBackend = *apiResponse.Model.Properties.Extensions
 		}
-		defaultExtensions, bundleWithDefaultExtensions := bundlesExtnestions[*pricing.Name]
+		modelAsJson12, _ := json.Marshal(pricing)
+		log.Printf("[DEBUG] resourceSecurityCenterSubscriptionPricingUpdate pricing bundle %s  obj %s", *apiResponse.Model.Name, modelAsJson12)
+		defaultExtensions, bundleWithDefaultExtensions := bundlesExtensions[*apiResponse.Model.Name]
+		log.Printf("[DEBUG] resourceSecurityCenterSubscriptionPricingUpdate read the name")
 		// Since the API response does not return the existing extensions when it is free, take them from the predefined list
+		log.Printf("[DEBUG] resourceSecurityCenterSubscriptionPricingUpdate condition is %d %t", len(extensionsStatusFromBackend), bundleWithDefaultExtensions)
 		if len(extensionsStatusFromBackend) == 0 && bundleWithDefaultExtensions {
+			log.Printf("[DEBUG] resourceSecurityCenterSubscriptionPricingUpdate Inside the default")
 			for _, defaultExtensionName := range defaultExtensions {
+				log.Printf("[DEBUG] resourceSecurityCenterSubscriptionPricingUpdate Adding extension %s", defaultExtensionName)
 				extensionsStatusFromBackend = append(extensionsStatusFromBackend, pricings_v2023_01_01.Extension{Name: defaultExtensionName, IsEnabled: pricings_v2023_01_01.IsEnabledFalse})
 			}
 		}
@@ -156,9 +163,13 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 	if vSub, okSub := d.GetOk("subplan"); okSub {
 		pricing.Properties.SubPlan = utils.String(vSub.(string))
 	}
-	if d.HasChange("extension") || d.IsNewResource() {
+
+	log.Printf("[DEBUG] resourceSecurityCenterSubscriptionPricingUpdate booleans d.HasChange(extension): %t d.IsNewResource(): %t Tier Name: %s", d.HasChange("extension"), d.IsNewResource(), apiResponse.Model.Properties.PricingTier)
+	if d.HasChange("extension") || d.IsNewResource() || apiResponse.Model.Properties.PricingTier == "Free" {
 		// can not set extensions for free tier
+		log.Printf("[DEBUG] resourceSecurityCenterSubscriptionPricingUpdate Inside %s", pricing.Properties.PricingTier)
 		if pricing.Properties.PricingTier == pricings_v2023_01_01.PricingTierStandard {
+			log.Printf("[DEBUG] resourceSecurityCenterSubscriptionPricingUpdate Inside 2")
 			var extensions = expandSecurityCenterSubscriptionPricingExtensions(d.Get("extension").(*pluginsdk.Set).List(), &extensionsStatusFromBackend)
 			pricing.Properties.Extensions = extensions
 		}
@@ -238,6 +249,7 @@ func expandSecurityCenterSubscriptionPricingExtensions(inputList []interface{}, 
 
 	if extensionsStatusFromBackend != nil {
 		for _, backendExtension := range *extensionsStatusFromBackend {
+			log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions setting extension %s to false", backendExtension.Name)
 			// set the default value to false, then turn on the extension that appear in the template
 			extensionStatuses[backendExtension.Name] = false
 		}
@@ -250,6 +262,7 @@ func expandSecurityCenterSubscriptionPricingExtensions(inputList []interface{}, 
 		if input["name"] == "" {
 			continue
 		}
+		log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions setting extension %s to true", input["name"].(string))
 		extensionStatuses[input["name"].(string)] = true
 		if vAdditional, ok := input["additional_extension_properties"]; ok {
 			extensionProperties[input["name"].(string)] = &vAdditional
@@ -270,6 +283,10 @@ func expandSecurityCenterSubscriptionPricingExtensions(inputList []interface{}, 
 		}
 		outputList = append(outputList, output)
 	}
+
+	modelAsJson12, _ := json.Marshal(outputList)
+
+	log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions final list %s to true", modelAsJson12)
 
 	return &outputList
 }
