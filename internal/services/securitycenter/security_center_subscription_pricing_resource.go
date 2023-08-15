@@ -133,10 +133,25 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 		}
 	}
 
-	extensionsStatusFromBackend := make([]pricings_v2023_01_01.Extension, 0)
-	if err == nil && apiResponse.Model != nil && apiResponse.Model.Properties != nil && apiResponse.Model.Properties.Extensions != nil {
-		extensionsStatusFromBackend = *apiResponse.Model.Properties.Extensions
+	bundlesExtnestions := map[string][]string{
+		"StorageAccounts": {"OnUploadMalwareScanning", "OnUploadMalwareScanning"},
+		"CloudPosture":    {"SensitiveDataDiscovery", "ContainerRegistriesVulnerabilityAssessments", "AgentlessDiscoveryForKubernetes", "AgentlessVmScanning"},
 	}
+
+	extensionsStatusFromBackend := make([]pricings_v2023_01_01.Extension, 0)
+	if err == nil && apiResponse.Model != nil && apiResponse.Model.Properties != nil {
+		if apiResponse.Model.Properties.Extensions != nil {
+			extensionsStatusFromBackend = *apiResponse.Model.Properties.Extensions
+		}
+		defaultExtensions, bundleWithDefaultExtensions := bundlesExtnestions[*pricing.Name]
+		// Since the API response does not return the existing extensions when it is free, take them from the predefined list
+		if len(extensionsStatusFromBackend) == 0 && bundleWithDefaultExtensions {
+			for _, defaultExtensionName := range defaultExtensions {
+				extensionsStatusFromBackend = append(extensionsStatusFromBackend, pricings_v2023_01_01.Extension{Name: defaultExtensionName, IsEnabled: pricings_v2023_01_01.IsEnabledFalse})
+			}
+		}
+	}
+	// w
 
 	if vSub, okSub := d.GetOk("subplan"); okSub {
 		pricing.Properties.SubPlan = utils.String(vSub.(string))
@@ -242,7 +257,6 @@ func expandSecurityCenterSubscriptionPricingExtensions(inputList []interface{}, 
 	}
 
 	for extensionName, toBeEnabled := range extensionStatuses {
-
 		isEnabled := pricings_v2023_01_01.IsEnabledFalse
 		if toBeEnabled {
 			isEnabled = pricings_v2023_01_01.IsEnabledTrue
