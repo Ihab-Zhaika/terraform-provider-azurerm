@@ -171,7 +171,7 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 	}
 
 	_, okExt11 := d.GetOk("extension")
-	log.Printf("[DEBUG] resourceSecurityCenterSubscriptionPricingUpdate  d.GetOk('extension') = %t && d.HasChange('extension') = %t && isCurrentlyInFree = %t", okExt11, !d.HasChange("extension"), isCurrentlyInFree)
+	log.Printf("[DEBUG] resourceSecurityCenterSubscriptionPricingUpdate  d.GetOk('extension') = %t && d.HasChange('extension') = %t && isCurrentlyInFree = %t", okExt11, d.HasChange("extension"), isCurrentlyInFree)
 
 	//if d.HasChange("extension") || d.IsNewResource() || isCurrentlyInFree {
 	// can not set extensions for free tier
