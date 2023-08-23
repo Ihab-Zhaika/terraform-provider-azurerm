@@ -135,6 +135,22 @@ func TestAccSecurityCenterSubscriptionPricing_cloudPostureExtension(t *testing.T
 	})
 }
 
+func TestAccSecurityCenterSubscriptionPricing_cloudPostureDefaultExtension(t *testing.T) {
+	data := acceptance.BuildTestData(t, "azurerm_security_center_subscription_pricing", "test")
+	r := SecurityCenterSubscriptionPricingResource{}
+
+	data.ResourceSequentialTestSkipCheckDestroyed(t, []acceptance.TestStep{
+		{
+			Config: r.cloudPostureDefaultExtension(),
+			Check: acceptance.ComposeTestCheckFunc(
+				check.That(data.ResourceName).ExistsInAzure(r),
+				check.That(data.ResourceName).Key("tier").HasValue("Standard"),
+				check.That(data.ResourceName).Key("resource_type").HasValue("CloudPosture"),
+				check.That(data.ResourceName).Key("extension.#").HasValue("4"),
+			),
+		},
+	})
+}
 func (SecurityCenterSubscriptionPricingResource) Exists(ctx context.Context, clients *clients.Client, state *pluginsdk.InstanceState) (*bool, error) {
 	id, err := pricings_v2023_01_01.ParsePricingIDInsensitively(state.ID)
 	if err != nil {
@@ -187,6 +203,7 @@ provider "azurerm" {
 resource "azurerm_security_center_subscription_pricing" "test" {
   tier          = "Standard"
   resource_type = "CloudPosture"
+  turn_on_default_extensions = false
 
   extension {
     name = "SensitiveDataDiscovery"
@@ -213,6 +230,7 @@ provider "azurerm" {
 resource "azurerm_security_center_subscription_pricing" "test" {
   tier          = "Standard"
   resource_type = "CloudPosture"
+  turn_on_default_extensions = false
 
   extension {
     name = "ContainerRegistriesVulnerabilityAssessments"
@@ -228,6 +246,22 @@ resource "azurerm_security_center_subscription_pricing" "test" {
   extension {
     name = "AgentlessDiscoveryForKubernetes"
   }
+}
+`
+}
+
+func (SecurityCenterSubscriptionPricingResource) cloudPostureDefaultExtension() string {
+	return `
+provider "azurerm" {
+  features {
+
+  }
+}
+
+resource "azurerm_security_center_subscription_pricing" "test" {
+  tier          = "Standard"
+  resource_type = "CloudPosture"
+  turn_on_default_extensions = true
 }
 `
 }

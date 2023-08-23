@@ -28,6 +28,7 @@ The following arguments are supported:
 * `tier` - (Required) The pricing tier to use. Possible values are `Free` and `Standard`.
 * `resource_type` - (Optional) The resource type this setting affects. Possible values are `Api`, `AppServices`, `ContainerRegistry`, `KeyVaults`, `KubernetesService`, `SqlServers`, `SqlServerVirtualMachines`, `StorageAccounts`, `VirtualMachines`, `Arm`, `Dns`, `OpenSourceRelationalDatabases`, `Containers`, `CosmosDbs` and `CloudPosture`. Defaults to `VirtualMachines`
 * `subplan` - (Optional) Resource type pricing subplan. Contact your MSFT representative for possible values.
+* `turn_on_default_extensions` = (Optional) Enables all the extensions by default, set to false in order to use the `extension` argument
 * `extension` - (Optional) One or more `extension` blocks as defined below.
 
 ---
@@ -38,7 +39,7 @@ A `extension` block supports the following:
 
 * `additional_extension_properties` - (Optional) Key/Value pairs that are required for some extensions.
 
-~> **NOTE:** If an extension is not defined, it will not be enabled. Use `ignore_changes` on the `extension` field if you want to use the default extensions.
+~> **NOTE:** When `turn_on_default_extensions` is false, If an extension is not defined, it will be disabled.
 
 ~> **NOTE:** Changing the pricing tier to `Standard` affects all resources of the given type in the subscription and could be quite costly.
 

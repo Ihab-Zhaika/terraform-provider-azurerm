@@ -81,6 +81,11 @@ func resourceSecurityCenterSubscriptionPricing() *pluginsdk.Resource {
 				Type:     pluginsdk.TypeString,
 				Optional: true,
 			},
+			"turn_on_default_extensions": {
+				Type:     pluginsdk.TypeBool,
+				Optional: true,
+				Default:  true,
+			},
 			"extension": {
 				Type:     pluginsdk.TypeSet,
 				Optional: true,
@@ -162,7 +167,7 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 	if vSub, okSub := d.GetOk("subplan"); okSub {
 		pricing.Properties.SubPlan = utils.String(vSub.(string))
 	}
-	if d.HasChange("extension") || d.IsNewResource() || isCurrentlyInFree {
+	if !d.Get("turn_on_default_extensions").(bool) && (d.HasChange("extension") || d.IsNewResource() || isCurrentlyInFree) {
 		// can not set extensions for free tier
 		if pricing.Properties.PricingTier == pricings_v2023_01_01.PricingTierStandard {
 			var extensions = expandSecurityCenterSubscriptionPricingExtensions(d.Get("extension").(*pluginsdk.Set).List(), &extensionsStatusFromBackend)
