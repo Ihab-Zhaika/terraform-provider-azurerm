@@ -171,14 +171,14 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 	}
 
 	_, okExt11 := d.GetOk("extension")
-	log.Printf("[DEBUG] resourceSecurityCenterSubscriptionPricingUpdate  d.GetOk('extension') = %t && !d.HasChange('extension') = %t && isCurrentlyInFree = %t", okExt11, !d.HasChange("extension"), isCurrentlyInFree)
+	log.Printf("[DEBUG] resourceSecurityCenterSubscriptionPricingUpdate  d.GetOk('extension') = %t && d.HasChange('extension') = %t && isCurrentlyInFree = %t", okExt11, !d.HasChange("extension"), isCurrentlyInFree)
 
-	if d.HasChange("extension") || d.IsNewResource() || isCurrentlyInFree {
-		// can not set extensions for free tier
-		if pricing.Properties.PricingTier == pricings_v2023_01_01.PricingTierStandard {
-			var extensions = expandSecurityCenterSubscriptionPricingExtensions(d.Get("extension").(*pluginsdk.Set).List(), &extensionsStatusFromBackend, shallExtensionsShallBeTurnedOnByDefault)
-			pricing.Properties.Extensions = extensions
-		}
+	//if d.HasChange("extension") || d.IsNewResource() || isCurrentlyInFree {
+	// can not set extensions for free tier
+	if pricing.Properties.PricingTier == pricings_v2023_01_01.PricingTierStandard {
+		var extensions = expandSecurityCenterSubscriptionPricingExtensions(d.Get("extension").(*pluginsdk.Set).List(), &extensionsStatusFromBackend, shallExtensionsShallBeTurnedOnByDefault)
+		pricing.Properties.Extensions = extensions
+		//}
 	}
 
 	if _, err := client.Update(ctx, id, pricing); err != nil {
