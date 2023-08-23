@@ -4,6 +4,7 @@
 package securitycenter
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -162,10 +163,20 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 	if vSub, okSub := d.GetOk("subplan"); okSub {
 		pricing.Properties.SubPlan = utils.String(vSub.(string))
 	}
+
+	shallExtensionsShallBeTurnedOnByDefault := false
+	// in case we are moving from free and the extension is in ignore changes they shall be enabled by default
+	if _, okExt := d.GetOk("extension"); okExt && !d.HasChange("extension") && isCurrentlyInFree {
+		shallExtensionsShallBeTurnedOnByDefault = true
+	}
+
+	_, okExt11 := d.GetOk("extension")
+	log.Printf("[DEBUG] resourceSecurityCenterSubscriptionPricingUpdate  d.GetOk('extension') = %t && !d.HasChange('extension') = %t && isCurrentlyInFree = %t", okExt11, !d.HasChange("extension"), isCurrentlyInFree)
+
 	if d.HasChange("extension") || d.IsNewResource() || isCurrentlyInFree {
 		// can not set extensions for free tier
 		if pricing.Properties.PricingTier == pricings_v2023_01_01.PricingTierStandard {
-			var extensions = expandSecurityCenterSubscriptionPricingExtensions(d.Get("extension").(*pluginsdk.Set).List(), &extensionsStatusFromBackend)
+			var extensions = expandSecurityCenterSubscriptionPricingExtensions(d.Get("extension").(*pluginsdk.Set).List(), &extensionsStatusFromBackend, shallExtensionsShallBeTurnedOnByDefault)
 			pricing.Properties.Extensions = extensions
 		}
 	}
@@ -238,7 +249,7 @@ func resourceSecurityCenterSubscriptionPricingDelete(d *pluginsdk.ResourceData, 
 	return nil
 }
 
-func expandSecurityCenterSubscriptionPricingExtensions(inputList []interface{}, extensionsStatusFromBackend *[]pricings_v2023_01_01.Extension) *[]pricings_v2023_01_01.Extension {
+func expandSecurityCenterSubscriptionPricingExtensions(inputList []interface{}, extensionsStatusFromBackend *[]pricings_v2023_01_01.Extension, shallExtensionsShallBeTurnedOnByDefault bool) *[]pricings_v2023_01_01.Extension {
 	var extensionStatuses = map[string]bool{}
 	var extensionProperties = map[string]*interface{}{}
 	var outputList []pricings_v2023_01_01.Extension
@@ -247,8 +258,15 @@ func expandSecurityCenterSubscriptionPricingExtensions(inputList []interface{}, 
 		for _, backendExtension := range *extensionsStatusFromBackend {
 			// set the default value to false, then turn on the extension that appear in the template
 			extensionStatuses[backendExtension.Name] = false
+
+			if shallExtensionsShallBeTurnedOnByDefault {
+				extensionStatuses[backendExtension.Name] = true
+			}
 		}
 	}
+
+	modelAsJson123, _ := json.Marshal(inputList)
+	log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions: shall be enabled by default %t,  input list %s", shallExtensionsShallBeTurnedOnByDefault, modelAsJson123)
 
 	// set any extension in the template to be true
 	for _, v := range inputList {
@@ -256,6 +274,7 @@ func expandSecurityCenterSubscriptionPricingExtensions(inputList []interface{}, 
 		if input["name"] == "" {
 			continue
 		}
+		log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions setting extension %s", input["name"].(string))
 		extensionStatuses[input["name"].(string)] = true
 		if vAdditional, ok := input["additional_extension_properties"]; ok {
 			extensionProperties[input["name"].(string)] = &vAdditional
@@ -277,6 +296,10 @@ func expandSecurityCenterSubscriptionPricingExtensions(inputList []interface{}, 
 		}
 		outputList = append(outputList, output)
 	}
+
+	modelAsJson12, _ := json.Marshal(outputList)
+
+	log.Printf("[DEBUG] expandSecurityCenterSubscriptionPricingExtensions final list %s to true", modelAsJson12)
 
 	return &outputList
 }
