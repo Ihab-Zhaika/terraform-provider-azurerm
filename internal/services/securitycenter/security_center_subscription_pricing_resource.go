@@ -134,21 +134,16 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 	}
 
 	extensionsStatusFromBackend := make([]pricings_v2023_01_01.Extension, 0)
-	isCurrentlyInFree := false
 	if err == nil && apiResponse.Model != nil && apiResponse.Model.Properties != nil {
 		if apiResponse.Model.Properties.Extensions != nil {
 			extensionsStatusFromBackend = *apiResponse.Model.Properties.Extensions
-		}
-
-		if apiResponse.Model.Properties.PricingTier == "Free" {
-			isCurrentlyInFree = true
 		}
 	}
 
 	if vSub, okSub := d.GetOk("subplan"); okSub {
 		pricing.Properties.SubPlan = utils.String(vSub.(string))
 	}
-	if d.HasChange("extension") {
+	if d.HasChange("extension") || d.IsNewResource() {
 		// can not set extensions for free tier
 		if pricing.Properties.PricingTier == pricings_v2023_01_01.PricingTierStandard {
 			var extensions = expandSecurityCenterSubscriptionPricingExtensions(d.Get("extension").(*pluginsdk.Set).List(), &extensionsStatusFromBackend)
@@ -156,27 +151,8 @@ func resourceSecurityCenterSubscriptionPricingUpdate(d *pluginsdk.ResourceData, 
 		}
 	}
 
-	updateResponse, updateErr := client.Update(ctx, id, pricing)
-	if updateErr != nil {
-		return fmt.Errorf("setting %s: %+v", id, updateErr)
-	}
-
-	if updateErr == nil && updateResponse.Model != nil && updateResponse.Model.Properties != nil {
-		if updateResponse.Model.Properties.Extensions != nil {
-			extensionsStatusFromBackend = *updateResponse.Model.Properties.Extensions
-		}
-	}
-
-	// after turning on the bundle, we have now the extensions list
-	if d.IsNewResource() || isCurrentlyInFree {
-		var extensions = expandSecurityCenterSubscriptionPricingExtensions(d.Get("extension").(*pluginsdk.Set).List(), &extensionsStatusFromBackend)
-		pricing.Properties.Extensions = extensions
-		_, updateErr := client.Update(ctx, id, pricing)
-		if err != nil {
-			if updateErr != nil {
-				return fmt.Errorf("setting %s: %+v", id, updateErr)
-			}
-		}
+	if _, err := client.Update(ctx, id, pricing); err != nil {
+		return fmt.Errorf("setting %s: %+v", id, err)
 	}
 
 	d.SetId(id.ID())
@@ -247,6 +223,10 @@ func expandSecurityCenterSubscriptionPricingExtensions(inputList []interface{}, 
 	var extensionStatuses = map[string]bool{}
 	var extensionProperties = map[string]*interface{}{}
 	var outputList []pricings_v2023_01_01.Extension
+
+	if len(inputList) == 0 {
+		return nil
+	}
 
 	if extensionsStatusFromBackend != nil {
 		for _, backendExtension := range *extensionsStatusFromBackend {
