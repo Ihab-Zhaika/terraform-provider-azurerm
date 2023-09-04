@@ -234,5 +234,9 @@ resource "azurerm_security_center_assessment_policy" "test" {
   severity     = "Medium"
   description  = "Test Description"
 }
+
+lifecycle {
+	ignore_changes = [extension]
+}
 `, data.RandomInteger, data.Locations.Primary, data.RandomInteger, data.RandomInteger)
 }
